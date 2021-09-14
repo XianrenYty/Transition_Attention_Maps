@@ -1,0 +1,19 @@
+Pillow>=8.1.1
+einops 
+h5py
+imageio 
+matplotlib
+numpy
+opencv_python
+scikit_image
+scipy
+sklearn
+torch == 1.7.0
+torchvision == 0.8.1
+tqdm
+transformers
+Pygments>=2.7.4
+captum
+wget
+ftfy
+regex
