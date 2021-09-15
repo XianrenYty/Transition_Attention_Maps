@@ -116,7 +116,7 @@ class InterpretTransformer(object):
         self.model = model
         self.model.eval()
     
-    def integrated_markov_chain(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
+    def transition_attention_maps(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
         if index == None:
@@ -172,8 +172,6 @@ class InterpretTransformer(object):
             states = self.model.blocks[-1].attn.get_attention_map().mean(1)[:, 0, :].reshape(b, 1, s)
         
         states = states * W_state
-        
-        return states[:, 0, 1:]
     
         sal = F.interpolate(states[:, 0, 1:].reshape(-1, 1, 14, 14), scale_factor=16, mode='bilinear').cuda()
         return sal.reshape(-1, 224, 224).cpu().detach().numpy()
@@ -272,8 +270,8 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='insertion and deletion evaluation')
     parser.add_argument('--method', type=str,
-            default='integrated_markov_chain',
-            choices=['integrated_markov_chain',
+            default='tam',
+            choices=['tam',
                      'rollout',
                      'raw_attn',
                      'attribution'],
@@ -291,7 +289,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     if args.method in [
-        'integrated_markov_chain', 'raw_attn', 'rollout'
+        'tam', 'raw_attn', 'rollout'
     ]:
         from baselines.ViT.ViT_new import vit_base_patch16_224
         # Model
@@ -340,8 +338,8 @@ if __name__ == '__main__':
     images = np.empty((len(data_loader), batch_size, 3, 224, 224))
     iterator = tqdm(data_loader, total=len(data_loader))
     for j, (img, _) in enumerate(iterator):
-        if args.method == 'integrated_markov_chain':
-            exp = it.integrated_markov_chain(img.cuda())
+        if args.method == 'tam':
+            exp = it.transition_attention_maps(img.cuda())
         elif args.method == 'raw_attn':
             exp = it.raw_attn(img.cuda()) 
         elif args.method == 'rollout':

@@ -62,12 +62,12 @@ parser.add_argument('--arc', type=str, default='vit', metavar='N',
 parser.add_argument('--train_dataset', type=str, default='imagenet', metavar='N',
                     help='Testing Dataset')
 parser.add_argument('--method', type=str,
-                    default='grad_rollout',
+                    default='tam',
                     choices=[ 
                         'raw_attn', 
                         'rollout', 
                         'transformer_attribution', 
-                        'integrated_markov_chain'
+                        'tam'
                     ],
                     help='')
 parser.add_argument('--thr', type=float, default=0.,
@@ -195,16 +195,14 @@ def eval_batch(image, labels, evaluator, index):
     image = image.requires_grad_()
     predictions = evaluator(image)
     
-    # segmentation test for the rollout baseline
     if args.method == 'rollout':
         Res = baselines.generate_rollout(image.cuda(), start_layer=1).reshape(batch_size, 1, 14, 14)
     
-    # segmentation test for our method
     elif args.method == 'transformer_attribution':
         Res = lrp.generate_LRP(image.cuda(), start_layer=1, method="transformer_attribution").reshape(batch_size, 1, 14, 14)
     
-    elif args.method == 'integrated_markov_chain':
-        Res = baselines.generate_integrated_markov_chain(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
+    elif args.method == 'tam':
+        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
         
     elif args.method == 'raw_attn':
         Res = baselines.generate_raw_attn(image.cuda()).reshape(batch_size, 1, 14, 14)  

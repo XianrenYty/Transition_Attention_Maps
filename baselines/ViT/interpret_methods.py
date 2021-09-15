@@ -10,7 +10,7 @@ class InterpretTransformer(object):
         self.model = model
         self.model.eval()
     
-    def integrated_markov_chain(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
+    def transition_attention_maps(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
         if index == None:

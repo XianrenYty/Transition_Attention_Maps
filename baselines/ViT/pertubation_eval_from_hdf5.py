@@ -150,15 +150,13 @@ if __name__ == "__main__":
                         choices=['per', '100'],
                         help='')
     parser.add_argument('--method', type=str,
-                        default='grad_rollout',
-                        choices=['raw_attn', 'rollout', 'lrp', 'transformer_attribution', 'full_lrp', 'v_gradcam', 'lrp_last_layer',
-                                 'lrp_second_layer', 'gradcam', 'attn_last_layer', 'attn_gradcam', 'input_grads',
-                                 'int_attr', 'grad_score_attn', 'attn_rf', 'grad_maps', 'grad_maps_rollout', 'grad_maps_dots',
-                                 'grad_lrp', 'score_weighted_grad_lrp', 'score_grad_lrp', 'int_grad_lrp',
-                                 'rollout_grad', 'rollout_grad_5', 'int_rollout_grad',
-                                 'integral_markov_state', 'integral_markov_state_1', 'integral_markov_state_2', 'integral_markov_state_3', 'integral_markov_state_4', 'integral_markov_state_5',
-                                 'integral_markov_state_6', 'integral_markov_state_7', 'integral_markov_state_8', 'integral_markov_state_9', 'integral_markov_state_10', 'integral_markov_state_11'],
-                        help='')
+                        default='tam',
+                        choices=[
+                            'raw_attn', 
+                            'rollout', 
+                            'transformer_attribution', 
+                            'tam'
+                        ],
     parser.add_argument('--vis-class', type=str,
                         default='top',
                         choices=['top', 'target', 'index'],

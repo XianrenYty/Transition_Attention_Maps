@@ -73,8 +73,8 @@ def compute_saliency_and_save(args):
                 Res = lrp.generate_LRP(data, start_layer=1, method="grad", index=index).reshape(data.shape[0], 1, 14, 14)
             elif args.method == 'raw_attn':
                 Res = baselines.generate_raw_attn(data, index=index).reshape(data.shape[0], 1, 14, 14)
-            elif args.method == 'integrated_markov_chain':
-                Res = baselines.generate_integral_ms(data, index=index, start_layer=4).reshape(data.shape[0], 1, 14, 14)
+            elif args.method == 'tam':
+                Res = baselines.generate_transition_attention_maps(data, index=index, start_layer=4).reshape(data.shape[0], 1, 14, 14)
             
             if args.method != 'full_lrp' and args.method != 'input_grads':
                 Res = torch.nn.functional.interpolate(Res, scale_factor=16, mode='bilinear').cuda()
@@ -90,12 +90,12 @@ if __name__ == "__main__":
                         default=1,
                         help='')
     parser.add_argument('--method', type=str,
-                        default='integrated_markov_chain',
+                        default='tam',
                         choices=[
                             'raw_attn', 
                             'rollout', 
                             'transformer_attribution', 
-                            'integrated_markov_chain'
+                            'tam'
                         ],
                         
                         help='')

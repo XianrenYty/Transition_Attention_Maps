@@ -101,7 +101,7 @@ class Baselines:
 
         return attn[:, 0, 1:]
     
-    def generate_integrated_markov_chain(self, input, index=None, start_layer=0, steps=20, with_integral=True, first_state=False):
+    def generate_transition_attention_maps(self, input, index=None, start_layer=0, steps=20, with_integral=True, first_state=False):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
         if index == None:

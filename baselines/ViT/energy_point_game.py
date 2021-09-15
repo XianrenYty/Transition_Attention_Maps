@@ -18,8 +18,6 @@ from tqdm import tqdm
 from PIL import Image
 from matplotlib import pyplot as plt
 
-from metrices import *
-
 class ImageNetBboxDataset(Dataset):
     def __init__(self, img_path, anno_path, transform, num_samples=1, seed=0):
         print(f'ramdon seed: {seed}, num_samples: {num_samples}')
@@ -74,7 +72,7 @@ class InterpretTransformer(object):
         self.model = model
         self.model.eval()
         
-    def integrated_markov_chain(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
+    def transition_attention_maps(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
         if index == None:
@@ -266,9 +264,9 @@ def energy_point_game(bboxes_batch, saliency_map):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='insertion and deletion evaluation')
     parser.add_argument('--method', type=str,
-            default='integrated_markov_chain',
+            default='tam',
             choices=[
-                'integrated_markov_chain', 
+                'tam', 
                 'attribution', 
                 'raw_attn', 
                 'rollout'
@@ -288,16 +286,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     if args.method in [
-        'integrated_markov_chain',
+        'tam',
         'raw_attn', 
         'rollout'
     ]:
         from baselines.ViT.ViT_new import vit_base_patch16_224
-        # Model
+
         model = vit_base_patch16_224(pretrained=True).cuda()
     else:
         from baselines.ViT.ViT_LRP import vit_base_patch16_224 as vit_LRP
-        # Model
+        
         model = vit_LRP(pretrained=True).cuda()
     
     it = InterpretTransformer(model)
@@ -338,8 +336,8 @@ if __name__ == '__main__':
         for anno in annos:
             bboxes.append(parseXML(anno))
         
-        if args.method == 'integrated_markov_chain':
-            Res = it.integrated_markov_chain(img.cuda(), start_layer=4)
+        if args.method == 'tam':
+            Res = it.transition_attention_maps(img.cuda(), start_layer=4)
         elif args.method == 'raw_attn':
             Res = it.raw_attn(img.cuda())
         elif args.method == 'rollout':
