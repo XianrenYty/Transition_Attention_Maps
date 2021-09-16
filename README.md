@@ -6,7 +6,7 @@ We provide a [jupyter notebook](./tutorials.ipynb) for quickly experience the vi
 
 ## Introduction
 
-We introduce an explainability method which is able to visualize classifications made by a transformer-based model. You can enter a specified category to see the evidence the model is classified as this category.
+We introduce an explainability method which is able to visualize classifications made by a transformer-based model. You can enter a target category to see the motivations behind that prediction or decision of this category.
 
 The pipeline of our proposed method **Transition Attention Maps** is as followed:
 
