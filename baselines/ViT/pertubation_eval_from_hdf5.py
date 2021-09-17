@@ -154,9 +154,16 @@ if __name__ == "__main__":
                         choices=[
                             'raw_attn', 
                             'rollout', 
-                            'transformer_attribution', 
+                            'attribution', 
                             'tam'
                         ],
+                        help='')
+    parser.add_argument('--arch', type=str,
+                        default='vit_base_patch16_224',
+                        choices=['vit_base_patch16_224',
+                                 'vit_large_patch16_224',
+                                 'deit_base_patch16_224'],
+                        help='')
     parser.add_argument('--vis-class', type=str,
                         default='top',
                         choices=['top', 'target', 'index'],
@@ -221,8 +228,19 @@ if __name__ == "__main__":
     imagenet_ds = ImagenetResults(vis_method_dir)
 
     # Model
-    model = vit_base_patch16_224(pretrained=True).cuda()
-    model.eval()
+#     model = vit_base_patch16_224(pretrained=True).cuda()
+#     model.eval()
+                        
+    if args.method in ['tam', 'raw_attn', 'rollout']:
+        from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+        model.eval()
+        baselines = Baselines(model)
+    else:
+        from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+        model.eval()
+        lrp = LRP(model)
 
     save_path = PATH + 'results/'
 

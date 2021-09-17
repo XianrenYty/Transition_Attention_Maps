@@ -29,6 +29,8 @@ MANIFEST
 
 results/
 baselines/ViT/visualizations/
+run/
+del_ins_results/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -286,18 +286,25 @@ if __name__ == '__main__':
                         default=False,
                         help='')
     
+    parser.add_argument('--arch', type=str,
+            default='vit_base_patch16_224',
+            choices=['vit_base_patch16_224',
+                     'vit_large_patch16_224',
+                     'deit_base_patch16_224'],
+            help='')
+    
     args = parser.parse_args()
     
     if args.method in [
         'tam', 'raw_attn', 'rollout'
     ]:
-        from baselines.ViT.ViT_new import vit_base_patch16_224
-        # Model
-        model = vit_base_patch16_224(pretrained=True).cuda()
+        from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+#         model = vit_base_patch16_224(pretrained=True).cuda()
     else:
-        from baselines.ViT.ViT_LRP import vit_base_patch16_224 as vit_LRP
-        # Model
-        model = vit_LRP(pretrained=True).cuda()
+        from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+#         model = vit_LRP(pretrained=True).cuda()
     
     it = InterpretTransformer(model)
     
@@ -343,7 +350,7 @@ if __name__ == '__main__':
         elif args.method == 'raw_attn':
             exp = it.raw_attn(img.cuda()) 
         elif args.method == 'rollout':
-            exp = it.raw_attn(img.cuda()) 
+            exp = it.rollout(img.cuda()) 
         elif args.method == 'attribution':
             exp = it.attribution(img.cuda())
         

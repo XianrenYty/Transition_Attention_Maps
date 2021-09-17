@@ -17,8 +17,8 @@ from utils.iou import IoU
 from data.Imagenet import Imagenet_Segmentation
 
 from ViT_explanation_generator import Baselines, LRP
-from ViT_new import vit_base_patch16_224
-from ViT_LRP import vit_base_patch16_224 as vit_LRP
+# from ViT_new import vit_base_patch16_224
+# from ViT_LRP import vit_base_patch16_224 as vit_LRP
 from ViT_orig_LRP import vit_base_patch16_224 as vit_orig_LRP
 
 from sklearn.metrics import precision_recall_curve
@@ -66,10 +66,19 @@ parser.add_argument('--method', type=str,
                     choices=[ 
                         'raw_attn', 
                         'rollout', 
-                        'transformer_attribution', 
+                        'attribution', 
                         'tam'
                     ],
                     help='')
+
+parser.add_argument('--arch', type=str,
+            default='vit_base_patch16_224',
+            choices=['vit_base_patch16_224',
+                     'vit_large_patch16_224',
+                     'deit_base_patch16_224'],
+            help='')
+
+
 parser.add_argument('--thr', type=float, default=0.,
                     help='threshold')
 
@@ -145,19 +154,29 @@ ds = Imagenet_Segmentation(args.imagenet_seg_path,
                            transform=test_img_trans, target_transform=test_lbl_trans)
 dl = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=False)
 
-# Model
-model = vit_base_patch16_224(pretrained=True).cuda()
-baselines = Baselines(model)
+# # Model
+# model = vit_base_patch16_224(pretrained=True).cuda()
+# baselines = Baselines(model)
 
-# LRP
-model_LRP = vit_LRP(pretrained=True).cuda()
-model_LRP.eval()
-lrp = LRP(model_LRP)
+# # LRP
+# model_LRP = vit_LRP(pretrained=True).cuda()
+# model_LRP.eval()
+# lrp = LRP(model_LRP)
 
-# orig LRP
-model_orig_LRP = vit_orig_LRP(pretrained=True).cuda()
-model_orig_LRP.eval()
-orig_lrp = LRP(model_orig_LRP)
+# # orig LRP
+# model_orig_LRP = vit_orig_LRP(pretrained=True).cuda()
+# model_orig_LRP.eval()
+# orig_lrp = LRP(model_orig_LRP)
+
+if args.method in ['tam', 'raw_attn', 'rollout']:
+    from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+    model = eval(args.arch)(pretrained=True).cuda()
+    baselines = Baselines(model)
+else:
+    from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+    model = eval(args.arch)(pretrained=True).cuda()
+    model.eval()
+    lrp = LRP(model)
 
 metric = IoU(2, ignore_index=-1)
 
@@ -198,11 +217,11 @@ def eval_batch(image, labels, evaluator, index):
     if args.method == 'rollout':
         Res = baselines.generate_rollout(image.cuda(), start_layer=1).reshape(batch_size, 1, 14, 14)
     
-    elif args.method == 'transformer_attribution':
+    elif args.method == 'attribution':
         Res = lrp.generate_LRP(image.cuda(), start_layer=1, method="transformer_attribution").reshape(batch_size, 1, 14, 14)
     
     elif args.method == 'tam':
-        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
+        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=0, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
         
     elif args.method == 'raw_attn':
         Res = baselines.generate_raw_attn(image.cuda()).reshape(batch_size, 1, 14, 14)  

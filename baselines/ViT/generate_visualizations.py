@@ -68,9 +68,9 @@ def compute_saliency_and_save(args):
                 index = target
 
             if args.method == 'rollout':
-                Res = baselines.generate_rollout(data, start_layer=1).reshape(data.shape[0], 1, 14, 14)
-            elif args.method == 'transformer_attribution':
-                Res = lrp.generate_LRP(data, start_layer=1, method="grad", index=index).reshape(data.shape[0], 1, 14, 14)
+                Res = baselines.generate_rollout(data, start_layer=0).reshape(data.shape[0], 1, 14, 14)
+            elif args.method == 'attribution':
+                Res = lrp.generate_LRP(data, start_layer=0, method="grad", index=index).reshape(data.shape[0], 1, 14, 14)
             elif args.method == 'raw_attn':
                 Res = baselines.generate_raw_attn(data, index=index).reshape(data.shape[0], 1, 14, 14)
             elif args.method == 'tam':
@@ -94,11 +94,18 @@ if __name__ == "__main__":
                         choices=[
                             'raw_attn', 
                             'rollout', 
-                            'transformer_attribution', 
+                            'attribution', 
                             'tam'
                         ],
-                        
                         help='')
+    
+    parser.add_argument('--arch', type=str,
+            default='vit_base_patch16_224',
+            choices=['vit_base_patch16_224',
+                     'vit_large_patch16_224',
+                     'deit_base_patch16_224'],
+            help='')
+
     parser.add_argument('--lmd', type=float,
                         default=10,
                         help='')
@@ -163,20 +170,30 @@ if __name__ == "__main__":
 
     cuda = torch.cuda.is_available()
     device = torch.device("cuda" if cuda else "cpu")
+    
+    if args.method in ['tam', 'raw_attn', 'rollout']:
+        from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+        baselines = Baselines(model)
+    else:
+        from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        model = eval(args.arch)(pretrained=True).cuda()
+        model.eval()
+        lrp = LRP(model)
+    
+#     # Model
+#     model = vit_base_patch16_224(pretrained=True).cuda()
+#     baselines = Baselines(model)
 
-    # Model
-    model = vit_base_patch16_224(pretrained=True).cuda()
-    baselines = Baselines(model)
+#     # LRP
+#     model_LRP = vit_LRP(pretrained=True).cuda()
+#     model_LRP.eval()
+#     lrp = LRP(model_LRP)
 
-    # LRP
-    model_LRP = vit_LRP(pretrained=True).cuda()
-    model_LRP.eval()
-    lrp = LRP(model_LRP)
-
-    # orig LRP
-    model_orig_LRP = vit_orig_LRP(pretrained=True).cuda()
-    model_orig_LRP.eval()
-    orig_lrp = LRP(model_orig_LRP)
+#     # orig LRP
+#     model_orig_LRP = vit_orig_LRP(pretrained=True).cuda()
+#     model_orig_LRP.eval()
+#     orig_lrp = LRP(model_orig_LRP)
 
     # Dataset loader for sample images
     transform = transforms.Compose([
