@@ -31,6 +31,7 @@ results/
 baselines/ViT/visualizations/
 run/
 del_ins_results/
+baselines/ViT/experiments/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

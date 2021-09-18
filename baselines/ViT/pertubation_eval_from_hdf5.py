@@ -23,7 +23,7 @@ def normalize(tensor,
     return tensor
 
 
-def eval(args):
+def my_eval(args):
     num_samples = 0
     num_correct_model = np.zeros((len(imagenet_ds,)))
     dissimilarity_model = np.zeros((len(imagenet_ds,)))
@@ -139,44 +139,54 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', type=int,
                         default=16,
                         help='')
+    
     parser.add_argument('--neg', action='store_true',
                         default=False,
                         help='')
+    
     parser.add_argument('--value', action='store_true',
                         default=False,
                         help='')
-    parser.add_argument('--scale', type=str,
+    
+    parser.add_argument('--scale', 
+                        type=str,
                         default='per',
                         choices=['per', '100'],
                         help='')
+    
     parser.add_argument('--method', type=str,
                         default='tam',
                         choices=[
-                            'raw_attn', 
-                            'rollout', 
-                            'attribution', 
-                            'tam'
-                        ],
+                        'raw_attn', 
+                        'rollout', 
+                        'attribution', 
+                        'tam'],
                         help='')
+    
     parser.add_argument('--arch', type=str,
                         default='vit_base_patch16_224',
                         choices=['vit_base_patch16_224',
                                  'vit_large_patch16_224',
                                  'deit_base_patch16_224'],
                         help='')
+    
     parser.add_argument('--vis-class', type=str,
                         default='top',
                         choices=['top', 'target', 'index'],
                         help='')
+    
     parser.add_argument('--wrong', action='store_true',
                         default=False,
                         help='')
+    
     parser.add_argument('--class-id', type=int,
                         default=0,
                         help='')
+    
     parser.add_argument('--is-ablation', type=bool,
                         default=False,
                         help='')
+    
     args = parser.parse_args()
 
     torch.multiprocessing.set_start_method('spawn')
@@ -235,12 +245,10 @@ if __name__ == "__main__":
         from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
         model = eval(args.arch)(pretrained=True).cuda()
         model.eval()
-        baselines = Baselines(model)
     else:
         from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
         model = eval(args.arch)(pretrained=True).cuda()
         model.eval()
-        lrp = LRP(model)
 
     save_path = PATH + 'results/'
 
@@ -250,4 +258,4 @@ if __name__ == "__main__":
         num_workers=2,
         shuffle=False)
 
-    eval(args)
+    my_eval(args)

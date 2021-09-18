@@ -215,13 +215,13 @@ def eval_batch(image, labels, evaluator, index):
     predictions = evaluator(image)
     
     if args.method == 'rollout':
-        Res = baselines.generate_rollout(image.cuda(), start_layer=1).reshape(batch_size, 1, 14, 14)
+        Res = baselines.generate_rollout(image.cuda(), start_layer=0).reshape(batch_size, 1, 14, 14)
     
     elif args.method == 'attribution':
-        Res = lrp.generate_LRP(image.cuda(), start_layer=1, method="transformer_attribution").reshape(batch_size, 1, 14, 14)
+        Res = lrp.generate_LRP(image.cuda(), start_layer=0, method="transformer_attribution").reshape(batch_size, 1, 14, 14)
     
     elif args.method == 'tam':
-        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=0, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
+        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
         
     elif args.method == 'raw_attn':
         Res = baselines.generate_raw_attn(image.cuda()).reshape(batch_size, 1, 14, 14)  

@@ -27,18 +27,33 @@ Evaluation experiments is based on:
 - [Weakly-Supervised Semantic Segmentation](https://github.com/OFRIN/PuzzleCAM)
 
 ## Reproducing evaluation results
+Use argument `--arch` to choose model architecture.
+
+Support: 
+- vit_base_patch16_224(default)
+- vit_large_patch16_224
+- deit_base_patch16_224
+
+Using the `--method` argument to choose the explainability method you want.
+
+Support: 
+- tam(default)
+- raw_attn
+- rollout
+- attribution
+
 
 ### Deletion & Insertion
 
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=./:$PYTHONPATH python3 baselines/ViT/del_ins.py --method tam
     
-You can using the `--method` argument to choose the explainability method you want. The `--num_samples` argument is used to set the number of test samples (default: 2000). The `--batch_size` argument is used to set the batch size (default: 8).
+The `--num_samples` argument is used to set the number of test samples (default: 2000). The `--batch_size` argument is used to set the batch size (default: 8).
 
 ### Energy-based Pointing Game
 
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=./:$PYTHONPATH python3 baselines/ViT/energy_point_game.py --method tam
     
-You can using the `--method` argument to choose the explainability method you want. The `--num_samples` argument is used to set the number of test samples (default: 2000). The `--batch_size` argument is used to set the batch size (default: 8).
+The `--num_samples` argument is used to set the number of test samples (default: 2000). The `--batch_size` argument is used to set the batch size (default: 8).
 
 ### Perturbation Test
     # step 1:
@@ -47,17 +62,15 @@ You can using the `--method` argument to choose the explainability method you wa
     # step 2:
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=./:$PYTHONPATH python3 baselines/ViT/pertubation_eval_from_hdf5.py --method tam
 
-You can using the `--method` argument to choose the explainability method you want.
+You can add the `--neg` argument to generate negative perturbation result.
 
 ### Segmentation Results
 
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=./:$PYTHONPATH python3 baselines/ViT/imagenet_seg_eval.py --method tam --imagenet-seg-path /path/to/gtsegs_ijcv.mat
     
-You can using the `--method` argument to choose the explainability method you want. You must provide a path to imagenet segmentation data in `--imagenet-seg-path`.
+You must provide a path to imagenet segmentation data in `--imagenet-seg-path`.
 
 
-
-## Citation
 
 
 
