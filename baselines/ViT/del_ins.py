@@ -13,10 +13,6 @@ from PIL import Image
 import argparse
 
 
-HW = 224 * 224 # image area
-n_classes = 1000
-
-
 # blur
 def gkern(klen, nsig):
     """Returns a Gaussian kernel array.
@@ -112,11 +108,12 @@ class CausalMetric():
         return scores
 
 class InterpretTransformer(object):
-    def __init__(self, model):
+    def __init__(self, model, img_size=224):
         self.model = model
         self.model.eval()
+        self.img_size=img_size
     
-    def transition_attention_maps(self, input, index=None, start_layer=4, steps=20, with_integral=True, first_state=False):
+    def transition_attention_maps(self, input, index=None, start_layer=0, steps=20, with_integral=True, first_state=False):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
         if index == None:
@@ -173,8 +170,8 @@ class InterpretTransformer(object):
         
         states = states * W_state
     
-        sal = F.interpolate(states[:, 0, 1:].reshape(-1, 1, 14, 14), scale_factor=16, mode='bilinear').cuda()
-        return sal.reshape(-1, 224, 224).cpu().detach().numpy()
+        sal = F.interpolate(states[:, 0, 1:].reshape(-1, 1, self.img_size//16, self.img_size//16), scale_factor=16, mode='bilinear').cuda()
+        return sal.reshape(-1, self.img_size, self.img_size).cpu().detach().numpy()
     
     
     def attribution(self, input, index=None, start_layer=0):
@@ -197,7 +194,7 @@ class InterpretTransformer(object):
 
         b, h, s, _ = self.model.blocks[-1].attn.get_attn_gradients().shape
 
-        num_blocks = 12
+        num_blocks = len(self.model.blocks)
         # first_block
         attn = self.model.blocks[start_layer].attn.get_attn_cam()
         grad = self.model.blocks[start_layer].attn.get_attn_gradients()
@@ -219,18 +216,18 @@ class InterpretTransformer(object):
             
             attrs = attr.bmm(attrs)
             
-        sal = F.interpolate(attrs[:, 0, 1:].reshape(-1, 1, 14, 14), scale_factor=16, mode='bilinear').cuda()
-        return sal.reshape(-1, 224, 224).cpu().detach().numpy()
+        sal = F.interpolate(attrs[:, 0, 1:].reshape(-1, 1, self.img_size//16, self.img_size//16), scale_factor=16, mode='bilinear').cuda()
+        return sal.reshape(-1, self.img_size, self.img_size).cpu().detach().numpy()
     
     
     def raw_attn(self, input, index=None):
         b = input.shape[0]
         output = self.model(input, register_hook=True)
 
-        attr = self.model.blocks[-1].attn.get_attention_map().mean(dim=1)
+        attrs = self.model.blocks[-1].attn.get_attention_map().mean(dim=1)
     
-        sal = F.interpolate(attr[:, 0, 1:].reshape(-1, 1, 14, 14), scale_factor=16, mode='bilinear').cuda()
-        return sal.reshape(-1, 224, 224).cpu().detach().numpy()
+        sal = F.interpolate(attrs[:, 0, 1:].reshape(-1, 1, self.img_size//16, self.img_size//16), scale_factor=16, mode='bilinear').cuda()
+        return sal.reshape(-1, self.img_size, self.img_size).cpu().detach().numpy()
     
     def rollout(self, input, index=None, start_layer=0):
         b = input.shape[0]
@@ -249,7 +246,7 @@ class InterpretTransformer(object):
 
         b, h, s, _ = self.model.blocks[-1].attn.get_attn_gradients().shape
 
-        num_blocks = 12
+        num_blocks = len(self.model.blocks)
         attrs = torch.eye(s).expand(b, h, s, s).cuda()
         for i in range(start_layer, num_blocks):
             attr = self.model.blocks[i].attn.get_attention_map()
@@ -262,8 +259,8 @@ class InterpretTransformer(object):
 
         attrs = attrs.mean(1)
         
-        sal = F.interpolate(attrs[:, 0, 1:].reshape(-1, 1, 14, 14), scale_factor=16, mode='bilinear').cuda()
-        return sal.reshape(-1, 224, 224).cpu().detach().numpy()
+        sal = F.interpolate(attrs[:, 0, 1:].reshape(-1, 1, self.img_size//16, self.img_size//16), scale_factor=16, mode='bilinear').cuda()
+        return sal.reshape(-1, self.img_size, self.img_size).cpu().detach().numpy()
 
     
 if __name__ == '__main__':
@@ -289,6 +286,7 @@ if __name__ == '__main__':
     parser.add_argument('--arch', type=str,
             default='vit_base_patch16_224',
             choices=['vit_base_patch16_224',
+                     'vit_base_patch16_384',
                      'vit_large_patch16_224',
                      'deit_base_patch16_224'],
             help='')
@@ -298,19 +296,25 @@ if __name__ == '__main__':
     if args.method in [
         'tam', 'raw_attn', 'rollout'
     ]:
-        from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224, vit_base_patch16_384
         model = eval(args.arch)(pretrained=True).cuda()
-#         model = vit_base_patch16_224(pretrained=True).cuda()
     else:
-        from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+        from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224, vit_base_patch16_384
         model = eval(args.arch)(pretrained=True).cuda()
-#         model = vit_LRP(pretrained=True).cuda()
+
+    if args.arch == 'vit_base_patch16_384':
+        img_size = 384
+    else:
+        img_size = 224
+        
+    HW = img_size * img_size 
+
+    n_classes = 1000
+
+    it = InterpretTransformer(model, img_size)
     
-    it = InterpretTransformer(model)
-    
-    # Image preprocessing function
     preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.5, 0.5, 0.5]),
@@ -322,12 +326,12 @@ if __name__ == '__main__':
     # blur
     if args.blur:
         print("use blur insertion")
-        insertion = CausalMetric(model, 'ins', 224 * 8, substrate_fn=blur)
+        insertion = CausalMetric(model, 'ins', img_size * 8, substrate_fn=blur)
     else:
         print("use zero insertion")
-        insertion = CausalMetric(model, 'ins', 224 * 8, substrate_fn=torch.zeros_like)
+        insertion = CausalMetric(model, 'ins', img_size * 8, substrate_fn=torch.zeros_like)
     
-    deletion = CausalMetric(model, 'del', 224 * 8, substrate_fn=torch.zeros_like)
+    deletion = CausalMetric(model, 'del', img_size * 8, substrate_fn=torch.zeros_like)
 
     scores = {'del': [], 'ins': []}
 
@@ -342,7 +346,7 @@ if __name__ == '__main__':
         sub_dataset, batch_size=batch_size, shuffle=True,
         num_workers=8, pin_memory=True)
 
-    images = np.empty((len(data_loader), batch_size, 3, 224, 224))
+    images = np.empty((len(data_loader), batch_size, 3, img_size, img_size))
     iterator = tqdm(data_loader, total=len(data_loader))
     for j, (img, _) in enumerate(iterator):
         if args.method == 'tam':

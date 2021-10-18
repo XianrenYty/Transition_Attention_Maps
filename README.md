@@ -33,6 +33,7 @@ Support:
 - vit_base_patch16_224(default)
 - vit_large_patch16_224
 - deit_base_patch16_224
+- vit_base_patch16_384
 
 Using the `--method` argument to choose the explainability method you want.
 

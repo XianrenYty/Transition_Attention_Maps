@@ -74,6 +74,7 @@ parser.add_argument('--method', type=str,
 parser.add_argument('--arch', type=str,
             default='vit_base_patch16_224',
             choices=['vit_base_patch16_224',
+                     'vit_base_patch16_384',
                      'vit_large_patch16_224',
                      'deit_base_patch16_224'],
             help='')
@@ -138,16 +139,21 @@ args.exp_np_path = os.path.join(saver.results_dir, 'explain/np')
 if not os.path.exists(args.exp_np_path):
     os.makedirs(args.exp_np_path)
 
+if args.arch == 'vit_base_patch16_384':
+    img_size = 384
+else:
+    img_size = 224
+    
 # Data
 normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 test_img_trans = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((img_size, img_size)),
     transforms.ToTensor(),
     normalize,
 ])
 
 test_lbl_trans = transforms.Compose([
-    transforms.Resize((224, 224), Image.NEAREST),
+    transforms.Resize((img_size, img_size), Image.NEAREST),
 ])
 
 ds = Imagenet_Segmentation(args.imagenet_seg_path,
@@ -169,11 +175,11 @@ dl = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=1, drop_la
 # orig_lrp = LRP(model_orig_LRP)
 
 if args.method in ['tam', 'raw_attn', 'rollout']:
-    from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+    from baselines.ViT.ViT_new import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224, vit_base_patch16_384
     model = eval(args.arch)(pretrained=True).cuda()
     baselines = Baselines(model)
 else:
-    from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224
+    from baselines.ViT.ViT_LRP import vit_base_patch16_224, vit_large_patch16_224, deit_base_patch16_224, vit_base_patch16_384
     model = eval(args.arch)(pretrained=True).cuda()
     model.eval()
     lrp = LRP(model)
@@ -215,20 +221,19 @@ def eval_batch(image, labels, evaluator, index):
     predictions = evaluator(image)
     
     if args.method == 'rollout':
-        Res = baselines.generate_rollout(image.cuda(), start_layer=0).reshape(batch_size, 1, 14, 14)
+        Res = baselines.generate_rollout(image.cuda(), start_layer=0).reshape(batch_size, 1, img_size//16, img_size//16)
     
     elif args.method == 'attribution':
-        Res = lrp.generate_LRP(image.cuda(), start_layer=0, method="transformer_attribution").reshape(batch_size, 1, 14, 14)
+        Res = lrp.generate_LRP(image.cuda(), start_layer=0, method="transformer_attribution").reshape(batch_size, 1, img_size//16, img_size//16)
     
     elif args.method == 'tam':
-        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, 14, 14) 
+        Res = baselines.generate_transition_attention_maps(image.cuda(), start_layer=4, with_integral=True, first_state=False).reshape(batch_size, 1, img_size//16, img_size//16) 
         
     elif args.method == 'raw_attn':
-        Res = baselines.generate_raw_attn(image.cuda()).reshape(batch_size, 1, 14, 14)  
+        Res = baselines.generate_raw_attn(image.cuda()).reshape(batch_size, 1, img_size//16, img_size//16)  
     
     
     if args.method != 'full_lrp':
-        # interpolate to full image size (224,224)
         Res = torch.nn.functional.interpolate(Res, scale_factor=16, mode='bilinear').cuda()
     
     

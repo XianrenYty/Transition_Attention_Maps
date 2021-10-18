@@ -90,7 +90,7 @@ class InterpretTransformer(object):
 
         b, h, s, _ = self.model.blocks[-1].attn.get_attn_gradients().shape
 
-        num_blocks = 12
+        num_blocks = len(self.model.blocks)
         # first_block
         attn = self.model.blocks[start_layer].attn.get_attn_cam()
         grad = self.model.blocks[start_layer].attn.get_attn_gradients()
@@ -139,7 +139,7 @@ class InterpretTransformer(object):
 
         b, h, s, _ = self.model.blocks[-1].attn.get_attn_gradients().shape
 
-        num_blocks = 12
+        num_blocks = len(self.model.blocks)
         attrs = torch.eye(s).expand(b, h, s, s).cuda()
         for i in range(start_layer, num_blocks):
             attr = self.model.blocks[i].attn.get_attention_map()

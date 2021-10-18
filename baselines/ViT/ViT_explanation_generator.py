@@ -61,7 +61,7 @@ class LRP:
 
         b, h, s, _ = self.model.blocks[-1].attn.get_attn_gradients().shape
 
-        num_blocks = 12
+        num_blocks = len(self.model.blocks)
         # first_block
         attn = self.model.blocks[start_layer].attn.get_attn_cam()
         grad = self.model.blocks[start_layer].attn.get_attn_gradients()
