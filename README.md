@@ -71,6 +71,16 @@ You can add the `--neg` argument to generate negative perturbation result.
     
 You must provide a path to imagenet segmentation data in `--imagenet-seg-path`.
 
+## Citation
+    @inproceedings{
+        anonymous2021explaining,
+        title={Explaining Information Flow Inside Vision Transformers Using Markov Chain},
+        author={Anonymous},
+        booktitle={eXplainable AI approaches for debugging and diagnosis.},
+        year={2021},
+        url={https://openreview.net/forum?id=TT-cf6QSDaQ}
+    }
+
 
 
 
